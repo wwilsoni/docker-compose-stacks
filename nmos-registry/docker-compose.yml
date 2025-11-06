@@ -12,7 +12,7 @@ services:
     - "8080:80"
     - "8081:81"
     volumes:
-    - "./registry.json:/home/registry.json"
+    - "./registry.json:/home/config/registry.json"
     environment:
     - RUN_NODE=FALSE
     networks:
