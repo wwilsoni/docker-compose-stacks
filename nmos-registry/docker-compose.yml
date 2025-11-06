@@ -1,0 +1,64 @@
+version: '3.6'
+
+services:
+
+  # Create NMOS Registry/Controller container instance
+  nmos-registry:
+    image: rhastie/nmos-cpp:latest
+    container_name: nmos-registry
+    hostname: nmos-registry
+    domainname: local
+    ports:
+    - "8080:80"
+    - "8081:81"
+    volumes:
+    - "./registry.json:/home/registry.json"
+    environment:
+    - RUN_NODE=FALSE
+    networks:
+    - easy-nmos
+
+  # Create NMOS Virtual Node container instance
+  nmos-virtnode:
+    image: rhastie/nmos-cpp:latest
+    container_name: nmos-virtnode
+    hostname: nmos-virtnode
+    domainname: local
+    ports:
+    - "8180:80"
+    - "8181:81"
+    volumes:
+    - "./node.json:/home/node.json"
+    environment:
+    - RUN_NODE=TRUE
+    - NMOS_REGISTRATION_API_HOST=nmos-registry
+    - NMOS_REGISTRATION_API_PORT=80
+    - NMOS_REGISTRATION_API_VERSION=v1.3
+    - NMOS_HOST_ADDRESS=192.168.0.162
+    networks:
+    - easy-nmos
+    depends_on:
+    - nmos-registry
+
+  # Create AMWA NMOS Testing container instance
+  nmos-testing:
+    image: amwa/nmos-testing:latest
+    container_name: nmos-testing
+    hostname: nmos-testing
+    domainname: local
+    entrypoint: |
+       /bin/bash -c "/etc/init.d/dbus start;
+       /etc/init.d/avahi-daemon start;
+       python3 nmos-test.py"
+    ports:
+    - "5000:5000"
+    volumes:
+    - "./UserConfig.py:/config/UserConfig.py"
+    networks:
+    - easy-nmos
+    depends_on:
+    - nmos-virtnode
+
+networks:
+  easy-nmos:
+    driver: bridge
